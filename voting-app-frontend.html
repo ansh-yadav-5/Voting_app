@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ballot Unit — Online Voting App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#C4CDD3;
+  --ink:#14202B;
+  --ink-soft:#4C5D6A;
+  --steel:#24435F;
+  --steel-dark:#1A3145;
+  --panel:#F7F6F3;
+  --rule:#A9B4BB;
+  --lamp:#C1352A;
+  --seal:#1F6E51;
+  --shadow:0 10px 0 -4px rgba(20,32,43,.14);
+}
+
+*{box-sizing:border-box}
+
+html,body{margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.22) 0 1px,transparent 1px 4px);
+  color:var(--ink);
+  font-family:Archivo,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  padding:24px 16px 64px;
+}
+
+h1,h2,h3{font-family:Bitter,Georgia,serif;font-weight:700;margin:0;letter-spacing:-.01em}
+
+.shell{max-width:920px;margin:0 auto}
+
+/* ---------- machine header ---------- */
+.machine-head{
+  background:var(--steel);
+  color:#EAF0F4;
+  border:2px solid var(--steel-dark);
+  border-radius:4px 4px 0 0;
+  padding:18px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.machine-head h1{font-size:23px;color:#fff;line-height:1.15}
+.machine-head p{margin:3px 0 0;font-size:13px;color:#A9C2D4}
+
+.who{display:flex;align-items:center;gap:10px;font-size:13px;color:#D3E1EB}
+.badge{
+  border:1px solid #6E93AE;
+  border-radius:2px;
+  padding:2px 8px;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:#CBE0EE;
+}
+.badge.admin{border-color:#E2A33C;color:#F4CE8C}
+
+/* ---------- body panel ---------- */
+.panel{
+  background:var(--panel);
+  border:2px solid var(--steel-dark);
+  border-top:none;
+  border-radius:0 0 4px 4px;
+  box-shadow:var(--shadow);
+}
+
+.settings{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 22px;
+  border-bottom:1px solid var(--rule);
+  background:#ECEAE5;
+  font-size:13px;
+}
+.settings label{color:var(--ink-soft)}
+.settings input{flex:1;min-width:190px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--rule);flex:none}
+.dot.live{background:var(--seal)}
+.dot.down{background:var(--lamp)}
+
+nav{display:flex;border-bottom:2px solid var(--steel-dark);background:#E2E0DA}
+nav button{
+  flex:1;
+  appearance:none;
+  background:none;
+  border:none;
+  border-right:1px solid var(--rule);
+  padding:13px 10px;
+  font:inherit;
+  font-weight:600;
+  font-size:14px;
+  color:var(--ink-soft);
+  cursor:pointer;
+}
+nav button:last-child{border-right:none}
+nav button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:inset 0 -3px 0 var(--lamp)}
+nav button:hover{color:var(--ink)}
+
+.view{padding:26px 22px 30px;display:none}
+.view.active{display:block}
+
+.view-head{margin-bottom:20px;border-bottom:1px solid var(--rule);padding-bottom:12px}
+.view-head h2{font-size:20px}
+.view-head p{margin:5px 0 0;color:var(--ink-soft);font-size:14px;max-width:62ch}
+
+/* ---------- forms ---------- */
+label.field{display:block;margin-bottom:14px}
+label.field span{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:var(--ink)}
+input,select{
+  width:100%;
+  padding:9px 11px;
+  font:inherit;
+  font-size:14px;
+  color:var(--ink);
+  background:#fff;
+  border:1px solid #8E9AA2;
+  border-radius:2px;
+}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--steel);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+
+.btn{
+  appearance:none;
+  font:inherit;
+  font-weight:600;
+  font-size:14px;
+  padding:10px 20px;
+  border-radius:2px;
+  border:1px solid var(--steel-dark);
+  background:var(--steel);
+  color:#fff;
+  cursor:pointer;
+}
+.btn:hover{background:var(--steel-dark)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--steel-dark);border-color:#8E9AA2}
+.btn.ghost:hover{background:#E4E2DC}
+.btn.danger{background:var(--lamp);border-color:#8E2A21}
+.btn.danger:hover{background:#8E2A21}
+.btn.small{padding:6px 12px;font-size:13px}
+
+/* ---------- auth ---------- */
+.auth-tabs{display:flex;gap:8px;margin-bottom:22px}
+.auth-tabs button{
+  appearance:none;background:none;border:none;border-bottom:3px solid transparent;
+  font:inherit;font-weight:700;font-size:15px;padding:6px 2px;margin-right:14px;
+  color:var(--ink-soft);cursor:pointer;font-family:Bitter,serif;
+}
+.auth-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--lamp)}
+.auth-form{max-width:520px}
+
+/* ---------- ballot rows ---------- */
+.ballot{border:1px solid var(--rule);border-bottom:none}
+.row{
+  display:grid;
+  grid-template-columns:52px 1fr auto;
+  align-items:center;
+  gap:16px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--rule);
+  background:#fff;
+}
+.row:nth-child(even){background:#FBFAF8}
+.serial{
+  width:38px;height:38px;
+  display:grid;place-items:center;
+  background:var(--steel);color:#fff;
+  font-family:Bitter,serif;font-size:17px;font-weight:700;
+  border-radius:2px;
+}
+.cand-name{font-weight:600;font-size:16px}
+.cand-party{font-size:13px;color:var(--ink-soft)}
+.vote-cell{display:flex;align-items:center;gap:12px}
+.lamp{
+  width:13px;height:13px;border-radius:50%;
+  background:#C3BFB6;
+  border:1px solid #918C83;
+  flex:none;
+  transition:background .25s ease, box-shadow .25s ease;
+}
+.lamp.on{background:var(--lamp);border-color:#8E2A21;box-shadow:0 0 0 4px rgba(193,53,42,.22)}
+@media (prefers-reduced-motion:reduce){.lamp{transition:none}}
+
+/* ---------- results ---------- */
+.result-row{padding:12px 0;border-bottom:1px solid var(--rule)}
+.result-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.result-top strong{font-size:15px}
+.result-top span{font-size:13px;color:var(--ink-soft)}
+.bar{height:12px;background:#DCD9D2;border-radius:2px;margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--seal);border-radius:2px;transition:width .4s ease}
+.count{font-family:Bitter,serif;font-weight:700;font-size:16px}
+
+.totals{
+  display:flex;gap:28px;flex-wrap:wrap;
+  padding:14px 0 18px;margin-bottom:6px;
+  border-bottom:2px solid var(--steel-dark);
+}
+.totals div b{display:block;font-family:Bitter,serif;font-size:26px;line-height:1.1}
+.totals div span{font-size:13px;color:var(--ink-soft)}
+
+/* ---------- misc ---------- */
+.notice{
+  padding:12px 14px;border-left:4px solid var(--steel);
+  background:#E7ECEF;font-size:14px;margin-bottom:18px;
+}
+.notice.voted{border-left-color:var(--seal);background:#E3EFE9}
+.notice.warn{border-left-color:var(--lamp);background:#F4E4E2}
+
+.empty{padding:34px 18px;text-align:center;color:var(--ink-soft);border:1px dashed var(--rule)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--rule)}
+th{font-size:13px;color:var(--ink-soft);font-weight:600}
+td.actions{display:flex;gap:6px;justify-content:flex-end}
+
+dl.profile{display:grid;grid-template-columns:150px 1fr;gap:0;margin:0 0 24px}
+dl.profile dt{padding:9px 0;border-bottom:1px solid var(--rule);color:var(--ink-soft);font-size:13px}
+dl.profile dd{padding:9px 0;border-bottom:1px solid var(--rule);margin:0;font-weight:500}
+
+.section-split{margin-top:30px;padding-top:22px;border-top:2px solid var(--steel-dark)}
+.section-split h3{font-size:17px;margin-bottom:12px}
+
+#toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  max-width:min(520px,92vw);
+  background:var(--ink);color:#fff;
+  padding:12px 18px;border-radius:3px;font-size:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,.28);
+  display:none;z-index:50;
+}
+#toast.bad{background:var(--lamp)}
+#toast.good{background:var(--seal)}
+
+@media (max-width:620px){
+  .grid2{grid-template-columns:1fr}
+  .row{grid-template-columns:44px 1fr;gap:10px}
+  .vote-cell{grid-column:1/-1;justify-content:flex-end}
+  dl.profile{grid-template-columns:1fr}
+  dl.profile dt{border-bottom:none;padding-bottom:0}
+  nav button{font-size:13px;padding:11px 6px}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="machine-head">
+    <div>
+      <h1>Ballot Unit</h1>
+      <p id="subtitle">General election · sign in with your Aadhar number to vote</p>
+    </div>
+    <div class="who" id="who" hidden>
+      <span id="whoName"></span>
+      <span class="badge" id="whoRole">voter</span>
+      <button class="btn ghost small" id="logoutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="settings">
+      <span class="dot" id="apiDot" title="Server status"></span>
+      <label for="apiBase">Server</label>
+      <input id="apiBase" type="url" placeholder="http://localhost:3000" autocomplete="off">
+      <button class="btn ghost small" id="apiSave">Connect</button>
+    </div>
+
+    <nav id="nav" hidden>
+      <button data-view="ballot" aria-selected="true">Ballot</button>
+      <button data-view="results" aria-selected="false">Results</button>
+      <button data-view="account" aria-selected="false">Account</button>
+      <button data-view="admin" aria-selected="false" id="adminTab" hidden>Manage candidates</button>
+    </nav>
+
+    <!-- ============ AUTH ============ -->
+    <section class="view active" id="view-auth">
+      <div class="auth-tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-auth="login">Sign in</button>
+        <button role="tab" aria-selected="false" data-auth="signup">Register to vote</button>
+      </div>
+
+      <form class="auth-form" id="loginForm">
+        <label class="field"><span>Aadhar number</span>
+          <input name="aadharCardNumber" inputmode="numeric" maxlength="12" required placeholder="12 digits">
+        </label>
+        <label class="field"><span>Password</span>
+          <input name="password" type="password" required>
+        </label>
+        <button class="btn" type="submit">Sign in</button>
+      </form>
+
+      <form class="auth-form" id="signupForm" hidden>
+        <div class="grid2">
+          <label class="field"><span>Full name</span><input name="name" required></label>
+          <label class="field"><span>Age</span><input name="age" type="number" min="18" required></label>
+          <label class="field"><span>Aadhar number</span><input name="aadharCardNumber" inputmode="numeric" maxlength="12" required></label>
+          <label class="field"><span>Mobile</span><input name="mobile" inputmode="tel"></label>
+          <label class="field"><span>Email</span><input name="email" type="email"></label>
+          <label class="field"><span>Role</span>
+            <select name="role"><option value="voter">Voter</option><option value="admin">Admin</option></select>
+          </label>
+        </div>
+        <label class="field"><span>Address</span><input name="address" required></label>
+        <label class="field"><span>Password</span><input name="password" type="password" minlength="6" required></label>
+        <button class="btn" type="submit">Create account</button>
+      </form>
+    </section>
+
+    <!-- ============ BALLOT ============ -->
+    <section class="view" id="view-ballot">
+      <div class="view-head">
+        <h2>Cast your vote</h2>
+        <p>Press the button next to one candidate. A vote cannot be changed once it is recorded.</p>
+      </div>
+      <div id="ballotNotice"></div>
+      <div class="ballot" id="ballotList"></div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="view" id="view-results">
+      <div class="view-head">
+        <h2>Live count</h2>
+        <p>Totals update as votes are recorded on the server.</p>
+      </div>
+      <div class="totals" id="totals"></div>
+      <div id="resultList"></div>
+      <p style="margin-top:18px"><button class="btn ghost small" id="refreshResults">Refresh count</button></p>
+    </section>
+
+    <!-- ============ ACCOUNT ============ -->
+    <section class="view" id="view-account">
+      <div class="view-head">
+        <h2>Your account</h2>
+        <p>Details on file with the electoral roll.</p>
+      </div>
+      <dl class="profile" id="profileList"></dl>
+
+      <div class="section-split">
+        <h3>Change password</h3>
+        <form id="passwordForm" style="max-width:420px">
+          <label class="field"><span>Current password</span><input name="currentPassword" type="password" required></label>
+          <label class="field"><span>New password</span><input name="newPassword" type="password" minlength="6" required></label>
+          <button class="btn" type="submit">Update password</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ ADMIN ============ -->
+    <section class="view" id="view-admin">
+      <div class="view-head">
+        <h2>Manage candidates</h2>
+        <p>Add, edit and remove the candidates that appear on the ballot. Admins cannot vote.</p>
+      </div>
+
+      <form id="candidateForm">
+        <input type="hidden" name="id">
+        <div class="grid2">
+          <label class="field"><span>Candidate name</span><input name="name" required></label>
+          <label class="field"><span>Party</span><input name="party" required></label>
+        </div>
+        <label class="field" style="max-width:200px"><span>Age</span><input name="age" type="number" min="25" required></label>
+        <button class="btn" type="submit" id="candidateSubmit">Add candidate</button>
+        <button class="btn ghost" type="button" id="candidateCancel" hidden>Cancel edit</button>
+      </form>
+
+      <div class="section-split">
+        <h3>On the ballot</h3>
+        <table>
+          <thead><tr><th>Name</th><th>Party</th><th>Age</th><th></th></tr></thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   Configuration
+   --------------------------------------------------------------- */
+const DEFAULT_API = 'http://localhost:3000';
+
+const state = {
+  api: localStorage.getItem('va_api') || DEFAULT_API,
+  token: localStorage.getItem('va_token') || null,
+  user: null,
+  candidates: [],
+  votedFor: localStorage.getItem('va_votedFor') || null
+};
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+/* ---------------------------------------------------------------
+   API layer
+   --------------------------------------------------------------- */
+async function api(path, { method = 'GET', body, auth = false } = {}) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (auth) {
+    if (!state.token) throw new Error('You are signed out. Sign in again.');
+    headers['Authorization'] = 'Bearer ' + state.token;
+  }
+
+  let res;
+  try {
+    res = await fetch(state.api.replace(/\/$/, '') + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (err) {
+    setServerDot(false);
+    throw new Error('Cannot reach the server at ' + state.api + '. Check it is running and that CORS is enabled.');
+  }
+
+  setServerDot(true);
+
+  let data = null;
+  const text = await res.text();
+  if (text) { try { data = JSON.parse(text); } catch { data = { message: text }; } }
+
+  if (!res.ok) {
+    if (res.status === 401 && state.token) signOut('Your session expired. Sign in again.');
+    throw new Error((data && (data.error || data.message)) || 'Request failed with status ' + res.status);
+  }
+  return data;
+}
+
+function setServerDot(up) {
+  $('#apiDot').className = 'dot ' + (up ? 'live' : 'down');
+  $('#apiDot').title = up ? 'Server reachable' : 'Server unreachable';
+}
+
+/* ---------------------------------------------------------------
+   Toast
+   --------------------------------------------------------------- */
+let toastTimer;
+function toast(msg, kind = '') {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = kind;
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 4200);
+}
+
+/* ---------------------------------------------------------------
+   Navigation
+   --------------------------------------------------------------- */
+function showView(name) {
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $('#view-' + name).classList.add('active');
+  $$('#nav button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === name)));
+
+  if (name === 'ballot') loadCandidates();
+  if (name === 'results') loadResults();
+  if (name === 'account') loadProfile();
+  if (name === 'admin') loadCandidates();
+}
+
+$$('#nav button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+
+$$('.auth-tabs button').forEach(b => b.addEventListener('click', () => {
+  $$('.auth-tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  $('#loginForm').hidden = b.dataset.auth !== 'login';
+  $('#signupForm').hidden = b.dataset.auth !== 'signup';
+}));
+
+/* ---------------------------------------------------------------
+   Session
+   --------------------------------------------------------------- */
+function enterApp() {
+  $('#nav').hidden = false;
+  $('#who').hidden = false;
+  $('#whoName').textContent = state.user.name || 'Voter';
+  const roleEl = $('#whoRole');
+  roleEl.textContent = state.user.role;
+  roleEl.className = 'badge' + (state.user.role === 'admin' ? ' admin' : '');
+  $('#adminTab').hidden = state.user.role !== 'admin';
+  $('#subtitle').textContent = state.user.role === 'admin'
+    ? 'General election · administrator console'
+    : 'General election · one vote per registered voter';
+  showView(state.user.role === 'admin' ? 'admin' : 'ballot');
+}
+
+function signOut(message) {
+  state.token = null;
+  state.user = null;
+  localStorage.removeItem('va_token');
+  $('#nav').hidden = true;
+  $('#who').hidden = true;
+  $('#subtitle').textContent = 'General election · sign in with your Aadhar number to vote';
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $('#view-auth').classList.add('active');
+  if (message) toast(message, 'bad');
+}
+
+$('#logoutBtn').addEventListener('click', () => signOut('Signed out.'));
+
+async function restoreSession() {
+  if (!state.token) return;
+  try {
+    const data = await api('/user/profile', { auth: true });
+    state.user = data.user;
+    enterApp();
+  } catch (err) {
+    signOut();
+  }
+}
+
+/* ---------------------------------------------------------------
+   Auth forms
+   --------------------------------------------------------------- */
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try {
+    const data = await api('/user/login', {
+      method: 'POST',
+      body: {
+        aadharCardNumber: Number(f.get('aadharCardNumber')),
+        password: f.get('password')
+      }
+    });
+    state.token = data.token;
+    localStorage.setItem('va_token', data.token);
+    const profile = await api('/user/profile', { auth: true });
+    state.user = profile.user;
+    e.target.reset();
+    toast('Signed in as ' + state.user.name, 'good');
+    enterApp();
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('#signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const btn = e.target.querySelector('button');
+
+  const aadhar = String(f.get('aadharCardNumber')).trim();
+  if (!/^\d{12}$/.test(aadhar)) {
+    return toast('Aadhar number must be exactly 12 digits.', 'bad');
+  }
+
+  btn.disabled = true;
+  try {
+    const data = await api('/user/signup', {
+      method: 'POST',
+      body: {
+        name: f.get('name'),
+        age: Number(f.get('age')),
+        email: f.get('email') || undefined,
+        mobile: f.get('mobile') || undefined,
+        address: f.get('address'),
+        aadharCardNumber: Number(aadhar),
+        password: f.get('password'),
+        role: f.get('role')
+      }
+    });
+    state.token = data.token;
+    localStorage.setItem('va_token', data.token);
+    const profile = await api('/user/profile', { auth: true });
+    state.user = profile.user;
+    e.target.reset();
+    toast('Registered. You are signed in.', 'good');
+    enterApp();
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---------------------------------------------------------------
+   Ballot
+   --------------------------------------------------------------- */
+async function loadCandidates() {
+  try {
+    state.candidates = await api('/candidate');
+  } catch (err) {
+    toast(err.message, 'bad');
+    state.candidates = [];
+  }
+  renderBallot();
+  renderAdminRows();
+}
+
+function renderBallot() {
+  const list = $('#ballotList');
+  const notice = $('#ballotNotice');
+  const isAdmin = state.user && state.user.role === 'admin';
+  const hasVoted = state.user && state.user.isVoted;
+
+  notice.innerHTML = '';
+  if (isAdmin) {
+    notice.innerHTML = '<div class="notice warn">Administrators keep the roll and cannot cast a vote.</div>';
+  } else if (hasVoted) {
+    notice.innerHTML = '<div class="notice voted">Your vote has been recorded. Open the Results tab to follow the count.</div>';
+  } else {
+    notice.innerHTML = '<div class="notice">You have one vote. Once pressed, the button locks.</div>';
+  }
+
+  if (!state.candidates.length) {
+    list.innerHTML = '<div class="empty">No candidates on the ballot yet. An administrator has to add them first.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  state.candidates.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const votedThis = state.votedFor === c._id;
+    const locked = isAdmin || hasVoted;
+
+    row.innerHTML = `
+      <div class="serial">${i + 1}</div>
+      <div>
+        <div class="cand-name"></div>
+        <div class="cand-party"></div>
+      </div>
+      <div class="vote-cell">
+        <span class="lamp ${votedThis ? 'on' : ''}"></span>
+        <button class="btn small" ${locked ? 'disabled' : ''}>${votedThis ? 'Voted' : 'Vote'}</button>
+      </div>`;
+
+    row.querySelector('.cand-name').textContent = c.name;
+    row.querySelector('.cand-party').textContent = c.party + (c.age ? ' · age ' + c.age : '');
+    row.querySelector('.vote-cell button').addEventListener('click', () => castVote(c, row));
+    list.appendChild(row);
+  });
+}
+
+async function castVote(candidate, row) {
+  if (!confirm(`Record your vote for ${candidate.name} (${candidate.party})?\n\nThis cannot be undone.`)) return;
+
+  const btn = row.querySelector('.vote-cell button');
+  btn.disabled = true;
+  try {
+    await api('/candidate/vote/' + candidate._id, { method: 'POST', auth: true });
+    state.user.isVoted = true;
+    state.votedFor = candidate._id;
+    localStorage.setItem('va_votedFor', candidate._id);
+    row.querySelector('.lamp').classList.add('on');
+    toast('Vote recorded for ' + candidate.name, 'good');
+    renderBallot();
+  } catch (err) {
+    btn.disabled = false;
+    toast(err.message, 'bad');
+  }
+}
+
+/* ---------------------------------------------------------------
+   Results
+   --------------------------------------------------------------- */
+async function loadResults() {
+  let rows;
+  try {
+    rows = await api('/candidate/vote/count');
+  } catch (err) {
+    return toast(err.message, 'bad');
+  }
+
+  const total = rows.reduce((s, r) => s + (r.count || 0), 0);
+  const leader = rows.length ? rows[0] : null;
+
+  $('#totals').innerHTML = `
+    <div><b>${total}</b><span>votes cast</span></div>
+    <div><b>${rows.length}</b><span>candidates</span></div>
+    <div><b id="leadName"></b><span>${total ? 'leading' : 'no votes yet'}</span></div>`;
+  $('#leadName').textContent = total && leader ? (leader.party || leader.name) : '—';
+
+  const list = $('#resultList');
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty">Nothing to count yet.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  rows.forEach(r => {
+    const pct = total ? Math.round((r.count / total) * 100) : 0;
+    const div = document.createElement('div');
+    div.className = 'result-row';
+    div.innerHTML = `
+      <div class="result-top">
+        <div><strong></strong> <span class="party-label"></span></div>
+        <div class="count">${r.count} <span style="font-weight:400;font-size:12px;color:var(--ink-soft)">(${pct}%)</span></div>
+      </div>
+      <div class="bar"><i style="width:${pct}%"></i></div>`;
+    div.querySelector('strong').textContent = r.name || r.party;
+    div.querySelector('.party-label').textContent = r.name ? r.party : '';
+    list.appendChild(div);
+  });
+}
+
+$('#refreshResults').addEventListener('click', loadResults);
+
+/* ---------------------------------------------------------------
+   Account
+   --------------------------------------------------------------- */
+async function loadProfile() {
+  let data;
+  try {
+    data = await api('/user/profile', { auth: true });
+  } catch (err) {
+    return toast(err.message, 'bad');
+  }
+  state.user = data.user;
+
+  const u = data.user;
+  const fields = [
+    ['Name', u.name],
+    ['Age', u.age],
+    ['Aadhar number', u.aadharCardNumber],
+    ['Email', u.email || '—'],
+    ['Mobile', u.mobile || '—'],
+    ['Address', u.address],
+    ['Role', u.role],
+    ['Vote status', u.isVoted ? 'Vote recorded' : 'Not yet voted']
+  ];
+
+  const dl = $('#profileList');
+  dl.innerHTML = '';
+  fields.forEach(([k, v]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = k;
+    const dd = document.createElement('dd');
+    dd.textContent = v;
+    dl.append(dt, dd);
+  });
+}
+
+$('#passwordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  try {
+    await api('/user/profile/password', {
+      method: 'PUT',
+      auth: true,
+      body: {
+        currentPassword: f.get('currentPassword'),
+        newPassword: f.get('newPassword')
+      }
+    });
+    e.target.reset();
+    toast('Password updated.', 'good');
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---------------------------------------------------------------
+   Admin
+   --------------------------------------------------------------- */
+function renderAdminRows() {
+  const tbody = $('#adminRows');
+  if (!tbody) return;
+
+  if (!state.candidates.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--ink-soft);padding:18px 8px">No candidates yet. Add the first one above.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '';
+  state.candidates.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="n"></td><td class="p"></td><td>${c.age ?? '—'}</td>
+      <td class="actions">
+        <button class="btn ghost small edit">Edit</button>
+        <button class="btn danger small del">Remove</button>
+      </td>`;
+    tr.querySelector('.n').textContent = c.name;
+    tr.querySelector('.p').textContent = c.party;
+    tr.querySelector('.edit').addEventListener('click', () => startEdit(c));
+    tr.querySelector('.del').addEventListener('click', () => removeCandidate(c));
+    tbody.appendChild(tr);
+  });
+}
+
+function startEdit(c) {
+  const form = $('#candidateForm');
+  form.id.value = c._id;
+  form.name.value = c.name;
+  form.party.value = c.party;
+  form.age.value = c.age ?? '';
+  $('#candidateSubmit').textContent = 'Save changes';
+  $('#candidateCancel').hidden = false;
+  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+$('#candidateCancel').addEventListener('click', resetCandidateForm);
+
+function resetCandidateForm() {
+  const form = $('#candidateForm');
+  form.reset();
+  form.id.value = '';
+  $('#candidateSubmit').textContent = 'Add candidate';
+  $('#candidateCancel').hidden = true;
+}
+
+$('#candidateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const id = form.id.value;
+  const payload = {
+    name: form.name.value,
+    party: form.party.value,
+    age: Number(form.age.value)
+  };
+
+  const btn = $('#candidateSubmit');
+  btn.disabled = true;
+  try {
+    if (id) {
+      await api('/candidate/' + id, { method: 'PUT', auth: true, body: payload });
+      toast('Candidate updated.', 'good');
+    } else {
+      await api('/candidate', { method: 'POST', auth: true, body: payload });
+      toast('Candidate added to the ballot.', 'good');
+    }
+    resetCandidateForm();
+    loadCandidates();
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+async function removeCandidate(c) {
+  if (!confirm(`Remove ${c.name} from the ballot? Their recorded votes go with them.`)) return;
+  try {
+    await api('/candidate/' + c._id, { method: 'DELETE', auth: true });
+    toast(c.name + ' removed.', 'good');
+    loadCandidates();
+  } catch (err) {
+    toast(err.message, 'bad');
+  }
+}
+
+/* ---------------------------------------------------------------
+   Server address
+   --------------------------------------------------------------- */
+$('#apiBase').value = state.api;
+$('#apiSave').addEventListener('click', () => {
+  const val = $('#apiBase').value.trim().replace(/\/$/, '');
+  if (!val) return toast('Enter the address your Express server runs on.', 'bad');
+  state.api = val;
+  localStorage.setItem('va_api', val);
+  toast('Connected to ' + val, 'good');
+  restoreSession();
+});
+
+restoreSession();
+</script>
+</body>
+</html>
